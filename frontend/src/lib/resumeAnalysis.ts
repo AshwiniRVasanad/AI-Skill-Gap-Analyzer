@@ -7,7 +7,7 @@ export interface AnalysisResult {
   courseLinks: { skill: string; url: string; platform: string }[];
 }
 
-const API_URL = "https://ai-skill-gap-analyzer-tzc8.onrender.com";
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const analyzeResumeAsync = async (resumeText: string) => {
   try {
