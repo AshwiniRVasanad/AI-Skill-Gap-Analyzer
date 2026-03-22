@@ -5,14 +5,19 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/")
-def home():
-    return "Backend is running 🚀"
-
-@app.route("/analyze", methods=["POST"])
-def analyze():
+@app.route("/login", methods=["POST"])
+def login():
     data = request.json
-    resume_text = data.get("resume", "")
+    username = data.get("username")
+    password = data.get("password")
+
+    # simple dummy check (replace with real DB later)
+    if username == "admin" and password == "admin123":
+        return jsonify({"success": True, "token": "fake-jwt-token", "isAdmin": True})
+    elif username == "user" and password == "user123":
+        return jsonify({"success": True, "token": "fake-jwt-token", "isAdmin": False})
+    else:
+        return jsonify({"success": False, "message": "Invalid credentials"}), 401
 
     # Dummy analysis (you can upgrade later)
     score = 75
