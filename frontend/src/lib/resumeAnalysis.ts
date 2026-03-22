@@ -7,60 +7,37 @@ export interface AnalysisResult {
   courseLinks: { skill: string; url: string; platform: string }[];
 }
 
-const skillSets: Record<string, string[]> = {
-  frontend: [
-    "React",
-    "TypeScript",
-    "CSS",
-    "HTML",
-    "JavaScript",
-    "Tailwind",
-    "Redux",
-    "Next.js",
-    "Testing",
-    "Git",
-    "REST API",
-    "Webpack",
-    "Performance",
-  ],
-  backend: [
-    "Node.js",
-    "Python",
-    "SQL",
-    "NoSQL",
-    "REST API",
-    "GraphQL",
-    "Docker",
-    "Git",
-    "Authentication",
-    "Caching",
-    "Testing",
-    "Microservices",
-  ],
-  datascience: [
-    "Python",
-    "Machine Learning",
-    "Pandas",
-    "NumPy",
-    "SQL",
-    "Statistics",
-    "Deep Learning",
-    "TensorFlow",
-    "Data Visualization",
-    "Feature Engineering",
-  ],
-  devops: [
-    "Docker",
-    "Kubernetes",
-    "CI/CD",
-    "Linux",
-    "AWS",
-    "Terraform",
-    "Monitoring",
-    "Git",
-    "Bash",
-    "Networking",
-  ],
+const API_URL = "https://ai-skill-gap-analyzer-tzc8.onrender.com";
+
+export const analyzeResume = async (resumeText: string) => {
+  try {
+    const response = await fetch(`${API_URL}/analyze`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ resume: resumeText }),
+    });
+
+    const data = await response.json();
+
+    return {
+      score: data.score,
+      level:
+        data.score > 80
+          ? "Excellent"
+          : data.score > 50
+          ? "Moderate"
+          : "Poor",
+      detectedSkills: [],
+      missingSkills: data.missing_skills || [],
+      suggestions: [data.message],
+      courseLinks: [],
+    };
+  } catch (error) {
+    console.error("Error analyzing resume:", error);
+    return null;
+  }
 };
 
 const courseSuggestions: Record<string, { url: string; platform: string }> = {
