@@ -9,11 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useActor } from "@/hooks/useActor";
-import {
-  type AnalysisResult,
-  analyzeResume,
-  buildResumeText,
-} from "@/lib/resumeAnalysis";
+import { type AnalysisResult, buildResumeText } from "@/lib/resumeAnalysis";
 import { BookOpen, CloudUpload, ExternalLink, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -58,13 +54,47 @@ export default function ResumePage({ navigate }: Props) {
     if (file) handleFile(file);
   };
 
-  const runAnalysis = (text: string) => {
+  // ✅ Updated: call your deployed Flask backend instead of local analyzeResume
+  const runAnalysis = async (text: string) => {
+    if (!text) return;
+
     setAnalyzing(true);
-    setTimeout(() => {
-      const result = analyzeResume(text);
+
+    try {
+      const response = await fetch(
+        "https://ai-skill-gap-analyzer-tzc8.onrender.com/analyze",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ resume: text }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to analyze resume");
+
+      const data = await response.json();
+
+      const result: AnalysisResult = {
+        score: data.score,
+        level:
+          data.score >= 80 ? "Excellent" :
+          data.score >= 50 ? "Moderate" :
+          "Poor",
+        detectedSkills: [], // optional parsing later
+        missingSkills: data.missing_skills || [],
+        suggestions: [data.message],
+        courseLinks: [], // optional
+      };
+
       setAnalysis(result);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to analyze resume via backend");
+    } finally {
       setAnalyzing(false);
-    }, 1500);
+    }
   };
 
   const saveToBackend = async () => {
@@ -117,7 +147,6 @@ export default function ResumePage({ navigate }: Props) {
           <TabsContent value="upload">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-4">
-                {/* biome-ignore lint/a11y/useSemanticElements: drag-and-drop zone requires div */}
                 <div
                   role="button"
                   tabIndex={0}
@@ -365,7 +394,9 @@ function AnalysisPanel({
                 <div>
                   <p className="text-sm font-semibold">{skill}</p>
                   <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${platformColor[platform] || ""}`}
+                    className={`text-xs px-2 py-0.5 rounded-full ${
+                      platformColor[platform] || ""
+                    }`}
                   >
                     {platform}
                   </span>
